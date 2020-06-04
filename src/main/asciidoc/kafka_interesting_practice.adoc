@@ -9,7 +9,7 @@
 include::_doc_general_attributes.adoc[]
 :doctype: article
 :toclevels: 3
-:imagesdir: images
+:imagesdir: images\kafka_interesting_practice
 :source-highlighter: highlightjs
 :highlightjsdir: highlight
 :icons: font

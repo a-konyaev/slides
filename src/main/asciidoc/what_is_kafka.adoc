@@ -9,7 +9,7 @@
 include::_doc_general_attributes.adoc[]
 :doctype: article
 :toclevels: 3
-:imagesdir: images
+:imagesdir: images\what_is_kafka
 :source-highlighter: highlightjs
 :highlightjsdir: highlight
 :icons: font
