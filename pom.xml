@@ -19,9 +19,9 @@
     </developers>
 
     <properties>
-        <presentation>clickhouse.adoc</presentation>
-    <!--<presentation>what_is_kafka.adoc</presentation>-->
-    <!--<presentation>kafka_interesting_practice.adoc</presentation>-->
+        <presentation>what_is_kafka.adoc</presentation>
+        <!--<presentation>kafka_interesting_practice.adoc</presentation>-->
+        <!--<presentation>clickhouse.adoc</presentation>-->
 
         <project.slides.directory>${project.build.directory}/generated-slides</project.slides.directory>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
