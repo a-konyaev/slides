@@ -275,48 +275,88 @@ image::conductor.png[]
 
 == 4. Kafka API
 
-* Apache Kafka Java libraries
-* librdkafka (C/C++)
-* confluent-kafka-go / dotnet / python
-
-https://docs.confluent.io/current/clients/index.html#ak-clients
+* Producer / Consumer
+** Apache Kafka Java libraries
+** librdkafka (C/C++)
+** confluent-kafka-go / dotnet / python
+* Kafka Streams
+* Kafka Connect
+* KSqlDB (by Confluent)
 
 === Идем смотреть код!
 
 image::go_coding.png[]
 
+=== Producer
 
+[source,java]
+----
+Properties props = new Properties();
+props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
+Producer<String, String> producer = new KafkaProducer<>(props);
 
-=== Spring Kafka
+while (!stop) {
+    var future = producer.send(record);
+    ...
+}
 
-//todo найти картинку
+producer.close();
+----
 
-=== Configuration
-application.yml
+=== Consumer
+
+[source,java]
+----
+Properties props = new Properties();
+props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+props.put(ConsumerConfig.GROUP_ID_CONFIG, "my-consumer");
+props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+consumer.subscribe(Collections.singleton("my-topic"));
+
+while (!stop) {
+    for (ConsumerRecord<String, String> record : consumer.poll(Duration.ofSeconds(1))) {
+        ...
+    }
+}
+
+consumer.close();
+----
+
+=== Spring Producer
+
+.application.yml
 [source,yaml]
 ----
 spring.kafka:
   bootstrap-servers: localhost:9092
 ----
-
-//TODO: программная конфигурация
-
-=== Producer
 [source,java]
 ----
+
+.Producer.java
 @Bean
 public KafkaTemplate<String, Event> kafkaTemplate(
-        ProducerFactory<String, Event> factory, ObjectMapper mapper) {
-    factory.setKeySerializer(new StringSerializer());
-    factory.setValueSerializer(new JsonSerializer<>(mapper));
+        ProducerFactory<String, Event> factory, ObjectMapper objectMapper) {
+    var defaultFactory = (DefaultKafkaProducerFactory<String, Event>) factory;
+    defaultFactory.setKeySerializer(new StringSerializer());
+    defaultFactory.setValueSerializer(new JsonSerializer<>(objectMapper));
     return new KafkaTemplate<>(factory);
 }
 
-
-kafkaTemplate.send(topic, eventKey, event);
+void run() {
+    ...
+    kafkaTemplate.send(topic, eventKey, event);
+}
 ----
-=== Consumer
+
+=== Spring Consumer
+
 [source,java]
 ----
 @KafkaListener(id = "myConsumerGroup", topics = "myTopic")
@@ -324,36 +364,32 @@ public void listen(String message) {
     ...
 }
 
-@KafkaListener(id = "pollResults", topics = "myTopic", containerFactory = "batchFactory")
+@KafkaListener(id = "pollResults", topics = "myTopic", containerFactory = "myFactory")
 public void pollResults(ConsumerRecords<?, ?> records) {
     ...
 }
 
-@KafkaListener(id = "listMsgAckConsumer", topics = "myTopic", containerFactory = "batchFactory")
+@KafkaListener(id = "listMsgAckConsumer", topics = "myTopic", containerFactory = "myFactory")
 void listenWithManualCommits(List<Message<?>> list, Acknowledgment ack, Consumer<?, ?> consumer) {
     ...
+    ack.acknowledge();
 }
 ----
 
-=== Streams
-
-//TODO
-
 == Тестирование
 
-=== Тестирование
-
 [%step]
+* Собирать и запускать тесты в докере, поднимая в соседнем контейнере кафку
 * org.springframework.kafka.test.EmbeddedKafkaBroker
 * org.testcontainers.containers.KafkaContainer
-* собирать и запускать тесты в докере, поднимая в соседнем контейнере кафку
-* TopologyTestDriver - для тестирования KafkaStream приложений
+* TopologyTestDriver - тестирование Kafka Streams приложений
+* ksql-test-runner - тестирование KSqlDB приложений
 
 == Ссылки
 
-//todo найти картинку
-
 * http://kafka.apache.org/documentation
-* http://kafka-tutorials.confluent.io
 * http://docs.spring.io/spring-kafka/docs/2.5.0.RELEASE/reference/html/#kafka
+* https://docs.confluent.io/current/clients/index.html#ak-clients
+* http://kafka-tutorials.confluent.io
+* https://docs.ksqldb.io
 * http://t.me/proKafka
