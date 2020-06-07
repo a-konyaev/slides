@@ -205,9 +205,9 @@ image::streams-interactive-queries.png[]
 
 == 3. Поднимаем локально
 
-[cols="70a,30a",frame=none,grid=none]
+[cols="50a,50a",frame=none,grid=none]
 |===
-|image::docker.png[]|image::cli.png[]|
+|image::docker.png[width=500,align="right"]|image::cli.png[width=200]|
 |===
 
 === Поднимаем в Docker
@@ -271,7 +271,7 @@ $ kafkacat -b kafka:9092 -t my_topic -C -o beginning -c 10
 
 === Conductor.io
 
-image::conductor.png[]
+image::conductor.png[width=800]
 
 == 4. Kafka API
 
@@ -387,9 +387,12 @@ void listenWithManualCommits(List<Message<?>> list, Acknowledgment ack, Consumer
 
 == Ссылки
 
-* http://kafka.apache.org/documentation
-* http://docs.spring.io/spring-kafka/docs/2.5.0.RELEASE/reference/html/#kafka
-* https://docs.confluent.io/current/clients/index.html#ak-clients
-* http://kafka-tutorials.confluent.io
-* https://docs.ksqldb.io
-* http://t.me/proKafka
+* Документация
+** http://kafka.apache.org/documentation
+** http://docs.spring.io/spring-kafka/docs/2.5.0.RELEASE/reference/html/#kafka
+** https://docs.confluent.io/current/clients/index.html#ak-clients
+** http://kafka-tutorials.confluent.io
+** https://docs.ksqldb.io
+* Исходники примеров - https://github.com/a-konyaev/kafka-blocks
+* Телеграм - http://t.me/proKafka
+
