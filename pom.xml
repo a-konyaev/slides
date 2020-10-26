@@ -19,7 +19,7 @@
     </developers>
 
     <properties>
-        <presentation>what_is_kafka.adoc</presentation>
+        <presentation>realtime_worker_digitizing.adoc</presentation>
         <!--<presentation>kafka_interesting_practice.adoc</presentation>-->
         <!--<presentation>clickhouse.adoc</presentation>-->
 
