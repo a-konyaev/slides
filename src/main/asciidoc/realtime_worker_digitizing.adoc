@@ -108,7 +108,6 @@ image::architecture.jpg[width=50%]
 * Телеметрия - TagInfo
 * Тревога - TagAlert
 .^|
-[%step]
 * Внутренний универсальный формат
 * до 5 событий в секунда от одной метки
 * Долго не храним (1 сутки)
@@ -116,13 +115,12 @@ image::architecture.jpg[width=50%]
 
 == Поток событий
 
-image::flow_1.jpg[]
+image::flow_1.jpg[width=75%]
 
 == Транслятор
 [cols="70a,30a",frame=none]
 |===
 .^|
-[%step]
 * Обоработка "сырых" событий:
 ** вычисление абсолютных координат
 ** зональное позиционирование
@@ -145,7 +143,6 @@ image::flow_1.jpg[]
 [cols="70a,30a",frame=none]
 |===
 .^|
-[%step]
 * Процессоры
 * Stateful-обработка + пунктуатор
 * Сложные вычисления
@@ -158,7 +155,8 @@ image::flow_1.jpg[]
 //--
 //* на вход сырые события
 //* Kafka Streams - топология
-//* Hazelcast-кеш, который ходит в PostgreSql
+//* Hazelcast-кеш, который ходит в PostgreSql - нужен поточу, что важно бысто выполнять обработку
+//  внутри стрима, а ходить постоянно в БД долго
 //* на выход - бизнес-события gen-1
 //1 траснятор обрабатывает события от ~50 объектов
 //--
@@ -168,7 +166,6 @@ image::flow_1.jpg[]
 [cols="55a,5a,40a",frame=none]
 |===
 .^|
-[%step]
 * KafkaConsumer -> подписка на события по типу
 * KafkaProducer -> сам определяет топик
 * Автоматическое построение топологии
@@ -187,17 +184,15 @@ image::flow_1.jpg[]
 //--
 
 == Бизнес-события
-[%step]
 * На одно "сырое" - 5 бизнес-событий
 * Передаются в UI и другим потребителям
 * Храним долго (1 месяц)
 
 == Поток событий
 
-image::flow_2.jpg[]
+image::flow_2.jpg[width=75%]
 
-== UI. Перемещение объектов
-[%step]
+== Перемещение объектов
 * Подписывается на бизнес-события
 * Передает события на клиента через веб-сокет
 * Фильтрация и редукция потока событий
@@ -206,7 +201,8 @@ image::flow_2.jpg[]
 // Фильтрация потока событийв зависимости от текущей выбранной геозоны
 // кластеризация на клиенте
 
-== UI. Перемещение объектов
+== Перемещение объектов
+
 Демо
 
 == Complex Event Processing
@@ -214,7 +210,6 @@ image::flow_2.jpg[]
 требующих максимально быстрого реагирования.
 
 == CEP-процессор
-[%step]
 * Правила, которые выявляют внештатные ситуации
 ** вход в опасную зону
 ** неправильная ориентация каски
@@ -224,7 +219,6 @@ image::flow_2.jpg[]
 * Отправляются нотификации
 
 == Esper
-[%step]
 * 2006 by EsperTech Inc.
 * Open Source, Java
 * Есть интеграция с Kafka
@@ -242,7 +236,7 @@ image::flow_2.jpg[]
 ** топик -> таблица
 ** событие -> строка в таблице
 * Схема - runtime-таблицы
-[source]
+[source,sql]
 ----
 create schema MySchema(objectId string, coordinates Coordinates);
 
@@ -252,14 +246,29 @@ from ObjectMoveEvent;
 ----
 
 == Esper. EPL. Окна
-* Последние N событий: `select * from Event#length(N)` -
-* Скользящее: `select * from Event#time(T)`
-* Прыгающее: `select * from Event#time_batch(T)`
+* Последние N событий
+[source,sql]
+----
+select sum(amount) from Event#length(N)
+----
+* Скользящее (sliding)
+[source,sql]
+----
+select name, avg(amount) from Event#time(T) group by name
+----
+* Прыгающее (hopping)
+[source,sql]
+----
+select * from Event#time_batch(T) where amount > 100
+----
+
+// sliding
+// hopping / tumbling
 
 == Esper. EPL. Контекст
 * Партиционирование по полям событий
 * Условие создания и удаления
-[source]
+[source,sql]
 ----
 create context Ctx
 partition by objectId FROM ZoneEntranceEvent
@@ -268,15 +277,13 @@ terminated by pattern[ZoneEntranceEvent(entranceType = LEFT) OR timer:interval(6
 ----
 
 == Esper. EPL. Выражения
-[source]
+[source,sql]
 ----
 @KafkaOutputTopic('notification')
 context Ctx
 select transpose(createNotification(e.objectId, ...))
 from ZoneEntranceEvent#firstunique(zoneId) e
 where e.isDangerous() = true
-
-ИЛИ
 
 insert into MySchema
 select e.objectId, ...
@@ -298,35 +305,41 @@ from ZoneEntranceEvent#lastevent e
 // createNotification - наш метод, который задекларирован при инициализации Esper-а
 //--
 
-== Почему Esper?
-* Описывать правила декларативно
-* Понятно не только разработчику
-* Аналоги:
-** KSqlDB
-** Flink CEP
+== Esper. Альтернативы
+* Kafka Streams - низкоуровневый API на Java
+* KSqlDB - все-таки это ESP, а не CEP
+* FlinkCEP - мало возможностей
 
 //[.notes]
 //--
 //Действительно зрелый продукт с багатым функционалом, мы его используем далеко не на всю его мощность
 //Альтернатива
-//- Flink-CEP, писать на java
-//- KSql, Kafka Streams - There is no out-of-the-box support. But it should be possible to use a CEP library (like Esper) via Processor API. – Matthias J. Sax Dec 8 '18
+//- KSql, Kafka Streams - There is no out-of-the-box support.
+//    But it should be possible to use a CEP library (like Esper) via Processor API. – Matthias J. Sax Dec 8 '18
+//  Все таки кафка - это ESP (Event Stream Processing), который является менее сложным, чем CEP.
+//  Суть CEP в том, что нужно находить паттерны среди потока разных событий
+//- Flink-CEP, писать на java, нет окон, например
 //--
 
-== UI. Журнал событий
-демо
+== Поток событий
 
+image::flow_3.jpg[width=75%]
+
+== Журнал событий и нотификации
+
+Демо
 // срабатывания предупреждения при внештатной ситуации - вход постороннего в зону работ по НД
 
 == Аналитика
-[%step]
 * Подготовка данных
 * Загрузка данных в аналитическую БД
 * Обработка запросов
 
+TODO: картинка!
+
 == Модули подготовки данных для аналитики
-[%step]
 Kafka Streams процессоры
+
 * Фильтрация
 * Денормализация / обогащение
 * Форматирование
@@ -339,7 +352,6 @@ Kafka Streams процессоры
 //--
 
 == Clickhouse
-[%step]
 * Загрузка событий из Kafka
 * Использование внешних справочников из PostgreSql
 * Данные храним постоянно
@@ -350,7 +362,6 @@ Kafka Streams процессоры
 //--
 
 == Почему Clickhouse?
-[%step]
 * Удобная интеграция с Kafka
 * Партиционирование данных по времени событий и ИД объекта
 * Дополнительная обработка при записи данных
@@ -366,7 +377,6 @@ Kafka Streams процессоры
 //--
 
 == Модуль Reports
-[%step]
 * Запросы приходят из Kafka
 * Тип запроса -> генератор -> динамический SQL-запрос в Clickhouse
 * Форматирование результата (данные, Excel, Pdf)
@@ -379,19 +389,16 @@ Kafka Streams процессоры
 //--
 
 == Зачем отдельный модуль Reports?
-[%step]
 * Часть работы выполняется в Java
 * Сокрытие работы с Clickhouse за интерфейсом типизированных запросов
 * Возможность масштабировать
 
 == Аналитическая панель
-[%step]
 * Панель виджитов
 ** своя для каждого пользователя
 ** виджет периодически отправляет запрос в Reports
 
 == Отчеты
-[%step]
 * Запрос формирования нового отчета
 * Журнал отчетов
 
@@ -402,7 +409,6 @@ Kafka Streams процессоры
 (!) картинка
 
 == История событий
-[%step]
 * Вычитывание событий из Kafka
 * Сохранение темпа воспроизведения
 * Плюсы:
