@@ -318,12 +318,27 @@ from ZoneEntranceEvent#lastevent e
 --
 
 == Esper. Альтернативы
+[cols="50a,50a",frame=none]
+|===
+.^|
+* Плюсы
+** Понятен не только разработчикам
+** Расширяемый
+** Мощный инструмент
+* Минусы
+** Сложно освоить инструмент
+** Сложно отлаживать
+.^|
 * Kafka Streams - низкоуровневый API на Java
 * KSqlDB - все-таки это ESP, а не CEP
 * FlinkCEP - мало возможностей
+.^|
+|===
 
 [.notes]
 --
+* расширяемый - можно написать свои java-методы и дергать их из правил
+* Esper - в принципе, сложный инструмент
 * KSql, Kafka Streams - There is no out-of-the-box support.
     But it should be possible to use a CEP library (like Esper) via Processor API. – Matthias J. Sax Dec 8 '18
 * Все таки кафка - это ESP (Event Stream Processing), который является менее сложным, чем CEP.
