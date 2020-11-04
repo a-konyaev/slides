@@ -75,7 +75,7 @@ image::architecture.jpg[width=50%]
 --
 * СОА выбрали потому, что на входе у нас события и потом по мере их обработки
     событий рождается еще больше
-* потоковая оброаботка - нужно обрабатывать события на лету, причем
+* потоковая обработка - нужно обрабатывать события на лету, причем
     логика обработки растет как снежный ком. Но при этом, нужно было сохранить
     независимость кусков логики друг от друга, иметь возможность в будущем
     добавлять новые кейсы обработки событий
@@ -85,6 +85,10 @@ image::architecture.jpg[width=50%]
 ** балансировка благодаря партиционированию топиков
 ** асинхронность (не везде нужно, но там где нельзя "зависать", оч. полезно)
 --
+
+== Поток событий
+
+image::flow_1.jpg[width=75%]
 
 == Адаптер
 * Около 10 штук на данный момент
@@ -119,7 +123,7 @@ image::architecture.jpg[width=50%]
 
 == Поток событий
 
-image::flow_1.jpg[width=75%]
+image::flow_2.jpg[width=75%]
 
 == Транслятор
 [cols="70a,30a",frame=none]
@@ -191,9 +195,10 @@ image::flow_1.jpg[width=75%]
 * Передаются в UI и другим потребителям
 * Храним долго (1 месяц)
 
+
 == Поток событий
 
-image::flow_2.jpg[width=75%]
+image::flow_3.jpg[width=75%]
 
 == Перемещение объектов
 * Подписывается на бизнес-события
@@ -210,6 +215,10 @@ image::flow_2.jpg[width=75%]
 == Перемещение объектов
 
 Демо
+
+== Поток событий
+
+image::flow_4.jpg[width=75%]
 
 == Complex Event Processing
 Обработка потока различных событий в реальном времени с целью выявления значимых событий,
@@ -252,24 +261,26 @@ create schema MySchema(objectId string, coordinates Coordinates);
 
 insert into MySchema
 select objectId, coordinates
-from ObjectMoveEvent;
+from ObjectMoveEvent(movementType = STOPPED);
 ----
 
 == Esper. EPL. Окна
 * Последние N событий
 [source,sql]
 ----
-select sum(amount) from Event#length(N)
+select * from Event#length(N)
 ----
 * Скользящее (sliding)
 [source,sql]
 ----
-select name, avg(amount) from Event#time(T) group by name
+select sum(amount) from Event#time(T)
 ----
 * Прыгающее (hopping)
 [source,sql]
 ----
-select * from Event#time_batch(T) where amount > 100
+select name, avg(amount)
+from Event(amount > 100)#time_batch(T)
+group by name
 ----
 
 [.notes]
@@ -305,6 +316,7 @@ select transpose(createNotification(e.objectId, ...))
 from ZoneEntranceEvent#firstunique(zoneId) e
 where e.isDangerous() = true
 
+context Ctx
 insert into MySchema
 select e.objectId, ...
 from ZoneEntranceEvent#lastevent e
@@ -348,7 +360,7 @@ from ZoneEntranceEvent#lastevent e
 
 == Поток событий
 
-image::flow_3.jpg[width=75%]
+image::flow_5.jpg[width=75%]
 
 == Журнал событий и нотификации
 
@@ -479,16 +491,16 @@ image::route.jpg[]
 за заданный период в прошлом с сохранением темпа их поступления.
 --
 
-== Что еще интересного?
-* Маршрутизация нотификаций - модуль Notifications на Kafka Streams
-* Загрузка данных из файлов - NiFi
-* TODO? - Apache Camel
-
-[.notes]
---
-* Nifi - грузим файлики и пишем результат в БД, а нотификации в Кафку
-** неудобно обрабатывать ошибки
---
+//== Что еще интересного?
+//* Маршрутизация нотификаций - модуль Notifications на Kafka Streams
+//* Загрузка данных из файлов - NiFi
+//* TODO? - Apache Camel
+//
+//[.notes]
+//--
+//* Nifi - грузим файлики и пишем результат в БД, а нотификации в Кафку
+//** неудобно обрабатывать ошибки
+//--
 
 == Выводы
 [%step]
