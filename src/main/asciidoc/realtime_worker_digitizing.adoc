@@ -351,19 +351,42 @@ Complex Event Processing
 * из которых читать и топики, в которые писать
 --
 
+== Esper. Пример
+
+Задача:
+*Не оставлять включенное оборудование без присмотра*
+
+Дано:
+
+* Событие "Изменение кол-во людей в геозоне"
+* Событие "Изменение состояния оборудования"
+* Макс. время без присмотра - 1 час
+
+
 == Esper. EPL. Схемы
+{nbsp}
+[source,sql]
+----
+create schema ZoneObjects(zoneId string, objects int);
+create schema DeviceStatus(type string, turnedOn bool);
+
+insert into ZoneObjects
+select zoneId, objects
+from ZoneObjectsEvent(zoneId = "Gym");
+
+insert into DeviceStatus
+select type, turnedOn
+from DeviceStatusEvent(type = "Treadmill");
+----
+
+[.notes]
+--
+ !
 * События из Kafka
 ** топик -> таблица
 ** событие -> строка в таблице
 * Схема - runtime-таблицы
-[source,sql]
-----
-create schema MySchema(objectId string, coordinates Coordinates);
-
-insert into MySchema
-select objectId, coordinates
-from ObjectMoveEvent(movementType = STOPPED);
-----
+--
 
 == Esper. EPL. Окна
 * Последние N событий
