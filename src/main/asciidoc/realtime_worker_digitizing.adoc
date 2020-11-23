@@ -352,31 +352,38 @@ Complex Event Processing
 --
 
 == Esper. Пример
+{nbsp}
 
-Задача:
-*Не оставлять включенное оборудование без присмотра*
-
-Дано:
-
+[cols="20a,80a",frame=none]
+|===
+.<| Задача:
+.<| Не оставлять включенное оборудование без присмотра
+.<| Дано:
+.<|
 * Событие "Изменение кол-во людей в геозоне"
 * Событие "Изменение состояния оборудования"
 * Макс. время без присмотра - 1 час
-
+|===
 
 == Esper. EPL. Схемы
-{nbsp}
 [source,sql]
 ----
-create schema ZoneObjects(zoneId string, objects int);
-create schema DeviceStatus(type string, turnedOn bool);
+create schema PersonsInGym(zoneId string, numberOfPersons int);
+create schema TreadmillStatus(zoneId string, deviceId string, turnedOn bool);
 
-insert into ZoneObjects
-select zoneId, objects
-from ZoneObjectsEvent(zoneId = "Gym");
+insert into PeopleInGym
+select
+    e.zoneId,
+    e.numberOfPersons
+from
+    ZoneObjectsEvent(zoneId = "Gym") e;
 
-insert into DeviceStatus
-select type, turnedOn
-from DeviceStatusEvent(type = "Treadmill");
+insert into TreadmillStatus
+select
+    e.zoneId,
+    e.deviceId,
+    e.turnedOn
+from DeviceStatusEvent(type = "Treadmill") e;
 ----
 
 [.notes]
@@ -388,62 +395,79 @@ from DeviceStatusEvent(type = "Treadmill");
 * Схема - runtime-таблицы
 --
 
-== Esper. EPL. Окна
-* Последние N событий
-[source,sql]
-----
-select * from Event#length(N)
-----
-* Скользящее (sliding)
-[source,sql]
-----
-select sum(amount) from Event#time(T)
-----
-* Прыгающее (hopping)
-[source,sql]
-----
-select name, avg(amount)
-from Event(amount > 100)#time_batch(T)
-group by name
-----
-
-[.notes]
---
-* sliding - события за последние T секунд
-* hopping / tumbling - события за последнюю пачку из Т секунд
---
+//== Esper. EPL. Окна
+//* Последние N событий
+//[source,sql]
+//----
+//select * from Event#length(N)
+//----
+//* Скользящее (sliding)
+//[source,sql]
+//----
+//select sum(amount) from Event#time(T)
+//----
+//* Прыгающее (hopping)
+//[source,sql]
+//----
+//select name, avg(amount)
+//from Event(amount > 100)#time_batch(T)
+//group by name
+//----
+//
+//[.notes]
+//--
+//* sliding - события за последние T секунд
+//* hopping / tumbling - события за последнюю пачку из Т секунд
+//--
 
 == Esper. EPL. Контекст
-* Партиционирование по полям событий
-* Условие создания и удаления
+{nbsp}
+
+ВКЛ -> (ВЫКЛ или ("Зал пуст" -> прошел час))
+{nbsp}
+
+{nbsp}
+
 [source,sql]
 ----
-create context Ctx
-partition by objectId FROM ZoneEntranceEvent
-initiated by ZoneEntranceEvent(entranceType = ENTERED)
-terminated by pattern[ZoneEntranceEvent(entranceType = LEFT) OR timer:interval(60 sec)];
+create context UnattendedTreadmillCtx
+    partition by zoneId, deviceId from TreadmillStatus
+    initiated by TreadmillStatus(turnedOn = true)
+    terminated by pattern[
+        TreadmillStatus(turnedOn = false) or
+        (PersonsInGym(numberOfPersons = 0) -> timer:interval(1 hour))
+    ];
 ----
+
+//create context UnattendedTreadmillCtx
+//partition by objectId FROM ZoneEntranceEvent
+//initiated by ZoneEntranceEvent(entranceType = ENTERED)
+//terminated by pattern[ZoneEntranceEvent(entranceType = LEFT) OR timer:interval(60 sec)];
 
 [.notes]
 --
+ !
+* Партиционирование по полям событий
+* Условие создания и удаления
 * партиция/контекст - таблица, в которой накапливаются события для анализа
 * чтобы партиционировать, нужно объявить контект
 * или более сложные варианты окон из комбинации событий: [A -> B or C]
 --
 
 == Esper. EPL. Выражения
+{nbsp}
+
+{nbsp}
+
 [source,sql]
 ----
 @KafkaOutputTopic('notification')
-context Ctx
-select transpose(createNotification(e.objectId, ...))
-from ZoneEntranceEvent#firstunique(zoneId) e
-where e.isDangerous() = true
-
-context Ctx
-insert into MySchema
-select e.objectId, ...
-from ZoneEntranceEvent#lastevent e
+context UnattendedTreadmillCtx
+select transpose(createNotification(
+    e.zoneId,
+    e.deviceId
+))
+from TreadmillStatus(turnedOn = false)#lastevent e
 ----
 
 [.notes]
