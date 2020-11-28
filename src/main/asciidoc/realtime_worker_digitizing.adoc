@@ -56,7 +56,7 @@ image::tag_to_ui.jpg[]
 --
  Рассказажу, как данные с носимых устройств превращаются в нотификации в UI.
 И как вообще может выглядеть архитектура системы, которая должна справляться
-с большим потоком событий и уметь выполнять много разных задач в процессе их обработки.
+с большим потоком событий, а также как мы сделали выявл. внештат. ситуация и реалтайм аналитику
 --
 
 == Архитектура
@@ -185,13 +185,16 @@ image::topology.jpg[]
 [cols="70a,30a",frame=none]
 |===
 .^|
-* Оптимизация доступа к БД
+[%step]
+* Проблема: Долгая обработка события
+* Решение: Кэширование доступа к БД
 * Hazelcast
 ** просто библиотека
 ** распределенный кэш
 ** проверенное Open Source решение
 
 .^|image::processor.jpg[]
+
 |===
 
 [.notes]
@@ -289,22 +292,29 @@ Stanford University
 --
 
 == ESP vs CEP
-[cols="45a,10a,45a",frame=none]
+[cols="47a,6a,47a",frame=none]
 |===
 |
 Event Stream Processing
 
-* Один поток упорядоченных событий
+* Упорядоченные события одного типа
 * Фильтрация, трансформация
 * Агрегация, группировка
 |
 |
 Complex Event Processing
 
-* Различные потоки не обязательно упорядоченных событий
+* Различные не обязательно упорядоченные события
+* Анализ внутри временного окна
 * Причинно-следственная связь
-* Анализ событий внутри временного окна
 |===
+{nbsp}
+
+"ESP tools trend towards including a full set of CEP capabilities"
+
+(c) David Luckham and Roy Schulte, 2020
+
+
 [.notes]
 --
  ! Пример ESP - следить на ценой акций и продавать при достижении определенного порога
@@ -314,16 +324,9 @@ Complex Event Processing
  ! задача CEP - выявить определенные шаблоны в потоке низкоуровневых событий, при этом зачастую
 комбинируя данные из различных источников, чтобы составить общую картину о мире.
  ! CEP - более сложная штука чем ESP
- ! пришел 1: в крок гость на митап, и проник в тренаж. зал, в который и просто сотрудников крок не пускают,
-если не подписал соблюдение правил безопасности.
-    ну это просто - вход в зону
- ! пример 2: пошел новый (!) сотрудник в тренажерный зал (вход в зону), встал на бег. догожку и
-побежал, при этом пульс у него поднялся выше тревож. уровня (предполагаем, что как то может его определить)
-и бежит так долгое время - аларм, вдруг ему плохо станет!
- ! еще пример: средняя скорость всех сотрудников стала выше средней на 50% - алерт! все куда то побежали?
 
  ! на самом деле CEP - это более ложная версия ESP, или ESP - это подмножество CEP.
-* также цель - не спамить в оператора по каждому алерту, а сообщить когда точно есть проблема.
+ESP tools will trend towards including a full set of CEP capabilities
 --
 
 == CEP-процессор
@@ -335,23 +338,7 @@ Complex Event Processing
 * Сложные события регистрируются в журнале
 * Отправляются нотификации
 
-== Esper
-* 2006 by EsperTech Inc.
-* Open Source, Java
-* Есть интеграция с Kafka
-* Event Processing Language
-** Расширение SQL
-** Компилируется в байткод
-* Горизонтально масштабируемый
-
-[.notes]
---
-* зрелый продукт с богатым функционалом, мы его используем далеко не на всю его мощность
-* интеграцию с Kafka - пришлось немного допилить, чтобы явно указывать топики,
-* из которых читать и топики, в которые писать
---
-
-== Esper. Пример
+== CEP. Пример
 {nbsp}
 
 [cols="20a,80a",frame=none]
@@ -365,25 +352,50 @@ Complex Event Processing
 * Макс. время без присмотра - 1 час
 |===
 
+[.notes]
+--
+ ! расуждаю о том, как бы я это делал на Kafka Streams
+--
+
+== Esper
+* 2006 by EsperTech Inc.
+* Open Source, Java
+* Есть интеграция с Kafka
+* Event Processing Language
+** Расширение SQL
+** Компилируется в байткод
+* Горизонтально масштабируемый
+
+[.notes]
+--
+ !
+* зрелый продукт с богатым функционалом, мы его используем далеко не на всю его мощность
+* интеграцию с Kafka - пришлось немного допилить, чтобы явно указывать топики,
+* из которых читать и топики, в которые писать
+--
+
 == Esper. EPL. Схемы
 [source,sql]
 ----
-create schema PersonsInGym(zoneId string, numberOfPersons int);
-create schema TreadmillStatus(zoneId string, deviceId string, turnedOn bool);
+@Description('Кол-во людей в геозоне')
+create schema PersonsInZone(zoneId string, numberOfPersons int);
 
-insert into PeopleInGym
+@Description('Статус оборудования (вкл или выкл)')
+create schema DeviceStatus(deviceId string, zoneId string, turnedOn bool);
+
+insert into PersonsInZone
 select
     e.zoneId,
     e.numberOfPersons
 from
-    ZoneObjectsEvent(zoneId = "Gym") e;
+    ZoneObjectsEvent(zoneType = "Workshop") e;
 
-insert into TreadmillStatus
+insert into DeviceStatus
 select
-    e.zoneId,
     e.deviceId,
+    e.zoneId,
     e.turnedOn
-from DeviceStatusEvent(type = "Treadmill") e;
+from DeviceStatusEvent(deviceType = "Machine") e;
 ----
 
 [.notes]
@@ -395,54 +407,19 @@ from DeviceStatusEvent(type = "Treadmill") e;
 * Схема - runtime-таблицы
 --
 
-//== Esper. EPL. Окна
-//* Последние N событий
-//[source,sql]
-//----
-//select * from Event#length(N)
-//----
-//* Скользящее (sliding)
-//[source,sql]
-//----
-//select sum(amount) from Event#time(T)
-//----
-//* Прыгающее (hopping)
-//[source,sql]
-//----
-//select name, avg(amount)
-//from Event(amount > 100)#time_batch(T)
-//group by name
-//----
-//
-//[.notes]
-//--
-//* sliding - события за последние T секунд
-//* hopping / tumbling - события за последнюю пачку из Т секунд
-//--
-
 == Esper. EPL. Контекст
-{nbsp}
-
-ВКЛ -> (ВЫКЛ или ("Зал пуст" -> прошел час))
 {nbsp}
 
 {nbsp}
 
 [source,sql]
 ----
-create context UnattendedTreadmillCtx
-    partition by zoneId, deviceId from TreadmillStatus
-    initiated by TreadmillStatus(turnedOn = true)
-    terminated by pattern[
-        TreadmillStatus(turnedOn = false) or
-        (PersonsInGym(numberOfPersons = 0) -> timer:interval(1 hour))
-    ];
+@Description('По каждому оборудованию, пока оно включено')
+create context TurnerOnDeviceCtx
+    partition by deviceId from DeviceStatus
+    initiated by DeviceStatus(turnedOn = true)
+    terminated by DeviceStatus(turnedOn = false);
 ----
-
-//create context UnattendedTreadmillCtx
-//partition by objectId FROM ZoneEntranceEvent
-//initiated by ZoneEntranceEvent(entranceType = ENTERED)
-//terminated by pattern[ZoneEntranceEvent(entranceType = LEFT) OR timer:interval(60 sec)];
 
 [.notes]
 --
@@ -454,43 +431,65 @@ create context UnattendedTreadmillCtx
 * или более сложные варианты окон из комбинации событий: [A -> B or C]
 --
 
-== Esper. EPL. Выражения
+== Esper. EPL. Шаблон
+"Включили" -> "Все ушли" -> ("Прошел час" И "Никто не вернулся")
 {nbsp}
 
 {nbsp}
 
 [source,sql]
 ----
-@KafkaOutputTopic('notification')
-context UnattendedTreadmillCtx
-select transpose(createNotification(
-    e.zoneId,
-    e.deviceId
-))
-from TreadmillStatus(turnedOn = false)#lastevent e
+@Description('Оборудование без присмотра')
+@KafkaOutputTopic(publishTo = 'notification')
+context TurnerOnDeviceCtx
+select
+    transpose(createAlertNotification(
+        ds.zoneId,
+        ds.deviceId
+    ))
+from
+    pattern [
+        ds = DeviceStatus(turnedOn = true)
+        -> every (
+            PersonsInZone(zoneId = ds.zoneId and number = 0)
+            -> (timer:interval(1 hour) and not PersonsInZone(zoneId = ds.zoneId and number > 0))
+        )
+    ];
 ----
 
 [.notes]
 --
+ !
+* every - нужно для того, чтобы отловить ситуацию, когда человек вернулся и снова ушел, не выключив оборудование
 * @KafkaOutputTopic - наша аннотация
 * transpose - встроенная функция, которая принимает java-объект и отправляет его в выходной поток
-* createNotification - наш метод, который задекларирован при инициализации Esper-а
+* createAlertNotification - наш метод, который задекларирован при инициализации Esper-а
 --
 
+== Демо
+{nbsp}
+
+Esper Notebook
+
 == Esper. Плюсы и минусы
-[cols="50a,50a",frame=none]
+[cols="48a,4a,48",frame=none]
 |===
 .^|
+(*+*) Программирование на более высоком уровне
+{nbsp}
+
 (*+*) Понятен не только разработчикам
 {nbsp}
 
-(*+*) Расширяемый
+(*+*) Мощный инструмент
 {nbsp}
 
-(*+*) Мощный инструмент
+(*+*) Можно быстро реализовать сложные вещи
+
+|
 
 .^|
-(*-*) Сложно освоить инструмент
+(*-*) Трудно освоить инструмент
 {nbsp}
 
 (*-*) Сложно отлаживать
@@ -498,23 +497,15 @@ from TreadmillStatus(turnedOn = false)#lastevent e
 
 [.notes]
 --
- ! Для отладки есть Online Notebook
---
-
-== Esper. Альтернатива - Kafka?
-image::is_ksqldb_cep.jpg[width=80%]
-
-[.notes]
---
  !
-* Kafka Streams - низкоуровневый API на Java
-* KSqlDB - все-таки это ESP, а не CEP
+* быстро реализовать сложные вещи - ну да, но если вещи действительно сложные, то тут тоже повозиться придется
+* трудно освоить - потому что просто оч. много возможностей, а так, делать что-то более-менее простое не сложно
 --
 
 == Esper. Альтернативы
 * FlinkCEP - мало возможностей
 * Spark Streaming - аналог Kafka Streams
-* TIBCO Streaming - платная
+* TIBCO Streaming, IBM Streams, Amazon Kinesis - платные
 * ...
 
 [.notes]
@@ -523,14 +514,34 @@ image::is_ksqldb_cep.jpg[width=80%]
 * Flink-CEP, писать на java, нет окон
 --
 
+== Esper? Может все таки Kafka Streams / KSqlDB!
+image::is_ksqldb_cep.jpg[width=80%]
+
+[%step]
+* После Esper-а лучше понимаешь, как _готовить_ потоковую обработку :)
+
+[.notes]
+--
+ !
+* Kafka Streams - низкоуровневый API на Java
+* KSqlDB - все-таки это ESP, а не CEP
+* я как программист, все таки предпочитаю java,
+    но есть требование бизнеса, чтобы аналитики понимали.
+* это как при первом переходе на NoSql после опыта только с реляционками
+--
+
 == Поток событий
 
 image::flow_5.jpg[width=75%]
+
+//[%notitle,background-iframe="https://www.youtube.com/embed/LaApqL4QjH8?rel=0&start=3&enablejsapi=1&autoplay=1&loop=1&controls=0&modestbranding=1"]
+//== a youtube video
 
 == Демо
 {nbsp}
 
 Журнал событий и нотификации
+
 [.notes]
 --
  ! Истории про взрыв здания - показать как я активирую зону НД и потом в нее вошел посторонний
@@ -545,7 +556,7 @@ image::flow_6.jpg[width=75%]
 * Фильтрация
 * Денормализация / обогащение
 * Форматирование
-* Фиксирование истории (*)
+* Фиксирование истории
 
 [.notes]
 --
@@ -561,9 +572,15 @@ image::flow_6.jpg[width=75%]
 image::flow_7.jpg[width=75%]
 //image::analytic.jpg[]
 
+== Аналитическая БД. Требования
+
+* Хранить очень много данных
+* Быстро выполнять запросы с условием С -- ПО
+
 == Clickhouse
 * Аналитическая БД от Yandex
 * Колоночная, Масштабируемая, Отказоустойчивая
+* Сжатие данных
 * Подходит для Time-series данных
 * Хороший вариант использования - читать данные "пачками"
 
@@ -578,7 +595,7 @@ image::flow_7.jpg[width=75%]
 * Загрузка данных из Kafka
 * Дополнительная обработка при загрузке данных
 * Подключение справочников из PostgreSql
-* Партиционирование данных по времени события и ИД объекта!
+* "Широкие" таблицы с партиционированием по времени события и ИД
 * Аналитические функции
 
 [.notes]
@@ -682,7 +699,7 @@ image::route.jpg[]
 == Выводы
 [%step]
 * Kafka - удачный выбор для Event Driven Architecture
-* При потоковой обработке помогает кеш
+* При потоковой обработке помогает кэш
 * Esper - хорошее решение для CEP
 * Clickhouse - то, что нужно для аналитическии по Time-series данным
 

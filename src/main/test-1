@@ -1,0 +1,17 @@
+исходное состояние: цех пуст, все станки выключены
+
+тест-1
+- пришел А
+- включил станок 1
+- ушел А
+- прошел 1 час
+    = тревога!!!
+
+%esperscenario
+t = "2020-12-10 12:00:00.000"
+PersonsInZone   = {zoneId="workshop-A", number=1}
+t = t.plus(1 minute)
+DeviceStatus    = {deviceId="machine-1", zoneId="workshop-A", turnedOn=true}
+t = t.plus(4 hours)
+PersonsInZone   = {zoneId="workshop-A", number=0}
+t = t.plus(1 hour)

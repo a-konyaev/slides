@@ -1,0 +1,32 @@
+тест-3
+- пришел А
+- включил станок 1
+- ушел А на 5 минут и вернулся
+- прошел 1 час
+    = нет тревоги
+- ушел А
+- прошел 1 час
+    = тревога!!!
+- вернулся А
+- прошло 2 час
+    = нет тревоги
+- ушел А
+- прошел 1 час
+    = тревога!!!
+
+%esperscenario
+t = "2020-12-10 12:00:00.000"
+PersonsInZone   = {zoneId="workshop-A", number=1}
+t = t.plus(1 minute)
+DeviceStatus    = {deviceId="machine-1", zoneId="workshop-A", turnedOn=true}
+t = t.plus(30 minutes)
+PersonsInZone   = {zoneId="workshop-A", number=0}
+t = t.plus(5 minute)
+PersonsInZone   = {zoneId="workshop-A", number=1}
+t = t.plus(1 hour)
+PersonsInZone   = {zoneId="workshop-A", number=0}
+t = t.plus(1 hour)
+PersonsInZone   = {zoneId="workshop-A", number=1}
+t = t.plus(2 hour)
+PersonsInZone   = {zoneId="workshop-A", number=0}
+t = t.plus(1 hour)
