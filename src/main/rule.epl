@@ -1,19 +1,26 @@
 https://notebook.esperonline.net/
 
 %esperepl
+// Объявляем схемы/таблицы событий
+// Поток событий == таблица, одно событие == строка в таблице
 create schema PersonsInZone(zoneId string, number int);
 create schema DeviceStatus(deviceId string, zoneId string, turnedOn bool);
 
+// Контекст по каждому станку, пока он включен
 create context TurnerOnDeviceCtx
     partition by deviceId from DeviceStatus
     initiated by DeviceStatus(turnedOn = true)
     terminated by DeviceStatus(turnedOn = false);
 
+// Шаблон: "Включили" → "Все ушли" → ("Прошел час" И "Никто не вернулся")
 @Name('Unattended device')
+//@KafkaOutputTopic(publishTo = 'notification')
 context TurnerOnDeviceCtx
 select
-    ds.deviceId,
-    ds.zoneId
+//    transpose(createAlertNotification(
+        ds.zoneId,
+        ds.deviceId
+//    ))
 from
     pattern [
         ds = DeviceStatus(turnedOn = true)
