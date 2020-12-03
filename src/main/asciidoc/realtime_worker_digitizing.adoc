@@ -53,7 +53,7 @@ image::tag_to_ui.jpg[]
 --
 
 == Архитектура
-image::architecture_0.jpg[width=55%]
+image::architecture_0.jpg[width=58%]
 
 [.notes]
 --
@@ -61,19 +61,22 @@ image::architecture_0.jpg[width=55%]
 --
 
 == Архитектура
-image::architecture_2.jpg[width=55%]
+image::architecture_1.jpg[width=58%]
 
 == Архитектура
-image::architecture_3.jpg[width=55%]
+image::architecture_2.jpg[width=58%]
 
 == Архитектура
-image::architecture_4.jpg[width=55%]
+image::architecture_3.jpg[width=58%]
 
 == Архитектура
-image::architecture_5.jpg[width=55%]
+image::architecture_4.jpg[width=58%]
 
 == Архитектура
-image::architecture_6.jpg[width=55%]
+image::architecture_5.jpg[width=58%]
+
+== Архитектура
+image::architecture_6.jpg[width=58%]
 
 [.notes]
 --
@@ -114,7 +117,7 @@ image::architecture_6.jpg[width=55%]
 * Отображение местоположения объектов
 * Нотификация о внештатных ситуациях
 * RealTime аналитика
-* История событий
+* Воспроизведение истории
 
 == Поток событий
 
@@ -284,11 +287,7 @@ image::flow_3.jpg[width=75%]
 ** кластеризация на клиенте
 --
 
-== Демо
-{nbsp}
-
-Перемещение объектов
-
+== Демо. Перемещение объектов
 video::demo-1.mp4[]
 
 == Поток событий
@@ -441,7 +440,7 @@ image::is_ksqldb_cep.jpg[width=80%]
  ! расуждаю о том, как бы я это делал на Kafka Streams
 --
 
-== Демо
+== Демо. Реализация правила
 {nbsp}
 
 https://notebook.esperonline.net/#[Esper Notebook]
@@ -545,10 +544,9 @@ image::flow_5.jpg[width=75%]
 //[%notitle,background-iframe="https://www.youtube.com/embed/LaApqL4QjH8?rel=0&start=3&enablejsapi=1&autoplay=1&loop=1&controls=0&modestbranding=1"]
 //== a youtube video
 
-== Демо
-{nbsp}
+== Демо. Нотификации
 
-Журнал событий и нотификации
+TODO: вставить видео
 
 [.notes]
 --
@@ -654,7 +652,7 @@ image::flow_8.jpg[width=75%]
 --
 
 == Аналитическая панель
-image::widgets.jpg[]
+image::widgets.jpg[width=100%]
 
 [.notes]
 --
@@ -665,7 +663,7 @@ image::widgets.jpg[]
 --
 
 == Отчеты
-image::reports.jpg[]
+image::reports.jpg[width=70%]
 
 [.notes]
 --
@@ -675,10 +673,14 @@ image::reports.jpg[]
 --
 
 == Тепловые карты
-image::heatmap.jpg[]
+image::heatmap.jpg[width=70%]
 
 == Маршруты
-image::route.jpg[]
+image::route.jpg[width=70%]
+
+== Поток событий
+
+image::flow_9.jpg[width=75%]
 
 == История событий
 * Вычитывание событий из Kafka за период в прошлом
