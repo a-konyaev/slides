@@ -27,9 +27,7 @@ image::logo.jpg[]
 
 Алексей Коняев
 {nbsp} +
-ведущий разработчик КРОК
-{nbsp} +
-akonyaev@croc.ru
+ведущий разработчик в КРОК
 
 == Цифровой рабочий
 image::digital_worker.png[width=70%]
@@ -717,3 +715,18 @@ image::flow_9.jpg[width=75%]
 но нужно поднатаскаться и изучить возможности
 * Clickhouse - партиционирование, масштабируемость, заточен под аналитику
 --
+
+== Полезные ссылки про CEP
+
+* Confluent blog: https://www.confluent.io/learn/complex-event-processing[What is CEP?]
+* Complex events: https://complexevents.com/2020/06/17/the-future-of-event-stream-analytics-and-cep[The Future of Event Stream Analytics and CEP]
+* Esper: https://www.espertech.com
+
+== Спасибо!
+
+image::akonyaev.jpg[]
+
+*Алексей Коняев*
+
+* icon:envelope[size=lg] akonyaev@croc.ru
+* icon:github[size=lg] https://github.com/a-konyaev[a-konyaev]
