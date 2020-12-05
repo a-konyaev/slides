@@ -472,6 +472,8 @@ image::is_ksqldb_cep.jpg[width=80%]
 
 https://notebook.esperonline.net/#[Esper Notebook]
 
+video::esper_notebook.mp4[]
+
 == Esper. EPL. Схемы
 [source,sql]
 ----
@@ -573,7 +575,7 @@ image::flow_5.jpg[width=75%]
 
 == Демо. Нотификации
 
-TODO: вставить видео
+video::demo-2.mp4[]
 
 [.notes]
 --
@@ -688,21 +690,25 @@ image::widgets.jpg[width=100%]
 * Виджет периодически отправляет запрос
 --
 
-== Отчеты
-image::reports.jpg[width=70%]
+== Демо. Аналитика
 
-[.notes]
---
- !
-* Запрос через Kafka
-* Нотификация о готовности
---
+video::demo-3.mp4[]
 
-== Тепловые карты
-image::heatmap.jpg[width=70%]
-
-== Маршруты
-image::route.jpg[width=70%]
+//== Отчеты
+//image::reports.jpg[width=70%]
+//
+//[.notes]
+//--
+// !
+//* Запрос через Kafka
+//* Нотификация о готовности
+//--
+//
+//== Тепловые карты
+//image::heatmap.jpg[width=70%]
+//
+//== Маршруты
+//image::route.jpg[width=70%]
 
 == Поток событий. История
 
@@ -728,7 +734,7 @@ image::flow_9.jpg[width=75%]
 
 == Демо. История
 
-TODO: вставить видео
+video::demo-4.mp4[]
 
 == Выводы
 [%step]
