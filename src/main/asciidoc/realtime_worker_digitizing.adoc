@@ -29,8 +29,9 @@ image::logo.jpg[]
 {nbsp} +
 ведущий разработчик в КРОК
 
+//[%notitle]
 == Цифровой рабочий
-image::digital_worker.png[width=70%]
+image::digital_worker.png[canvas,size=contain]
 
 [.notes]
 --
@@ -111,14 +112,36 @@ image::architecture_6.jpg[width=58%]
 ** асинхронность (не везде нужно, но там где нельзя "зависать", оч. полезно)
 --
 
-== Задачи
-[%step]
-* Отображение местоположения объектов
+== Толя Грачкин
+
+[cols="30a,70a",frame=none]
+|===
+.^|
+* Местоположение объектов
 * Нотификация о внештатных ситуациях
 * RealTime аналитика
 * Воспроизведение истории
+.^|image::tolya_1.jpg[width=75%, caption="", title="\"Неподдающиеся\", 1959 г"]
+|===
 
-== Поток событий
+[.notes]
+--
+ ! Давайте рассмотрим, как ЦР решает эти задачи на примере Толи Грачкина
+--
+
+== Толя Грачкин
+
+[cols="30a,70a",frame=none]
+|===
+.^|
+* Местоположение объектов
+* Нотификация о внештатных ситуациях
+* RealTime аналитика
+* Воспроизведение истории
+.^|image::tolya_2.jpg[width=75%, caption="", title="\"Неподдающиеся\", 1959 г"]
+|===
+
+== Поток событий. Местоположение
 
 image::flow_1.jpg[width=75%]
 
@@ -159,7 +182,7 @@ image::flow_1.jpg[width=75%]
 т.к. они в нормальной ситуации сразу же обрабатываются, после чего их можно выкинуть.
 --
 
-== Поток событий
+== Поток событий. Местоположение
 
 image::flow_2.jpg[width=75%]
 
@@ -241,13 +264,13 @@ image::topology.jpg[]
 ** 2 CPU + 2 Gb
 ** Amazon EC2 t4g.micro
 * Пропускная способность
-** Events per second
-*** входящие -- 500 EPS
-*** новые -- 1500 EPS
+** событий в секунду
+*** входящих -- 500
+*** исходящих --  1500
 ** 100 до 10 тысяч меток
-* Объем на диске Kafka:
-** входящие -- 36 Gb/day
-** новые -- 1 Tb/month
+* Объем на диске в Kafka:
+** входящие события -- 36 Gb/day
+** исходящие события -- 1 Tb/month
 
 [.notes]
 --
@@ -267,7 +290,7 @@ image::topology.jpg[]
 Но про то, где и как храним будет дальше.
 --
 
-== Поток событий
+== Поток событий. Местоположение
 
 image::flow_3.jpg[width=75%]
 
@@ -289,7 +312,12 @@ image::flow_3.jpg[width=75%]
 == Демо. Перемещение объектов
 video::demo-1.mp4[]
 
-== Поток событий
+[.notes]
+--
+ ! Еще раз сказать про SOA и про кэш
+--
+
+== Поток событий. Внештатные ситуации
 
 image::flow_4.jpg[width=75%]
 
@@ -420,7 +448,7 @@ image::is_ksqldb_cep.jpg[width=80%]
 * не оч. удобно отлаживать
 --
 
-== CEP. Пример задачи
+== CEP. Пример
 {nbsp}
 
 [cols="20a,80a",frame=none]
@@ -448,7 +476,7 @@ https://notebook.esperonline.net/#[Esper Notebook]
 [source,sql]
 ----
 @Description('Кол-во людей в геозоне')
-create schema PersonsInZone(zoneId string, numberOfPersons int);
+create schema PersonsInZone(zoneId string, number int);
 
 @Description('Статус оборудования (вкл или выкл)')
 create schema DeviceStatus(deviceId string, zoneId string, turnedOn bool);
@@ -456,7 +484,7 @@ create schema DeviceStatus(deviceId string, zoneId string, turnedOn bool);
 insert into PersonsInZone
 select
     e.zoneId,
-    e.numberOfPersons
+    e.number
 from
     ZoneObjectsEvent(zoneType = "Workshop") e;
 
@@ -536,7 +564,7 @@ from
 * createAlertNotification - наш метод, который задекларирован при инициализации Esper-а
 --
 
-== Поток событий
+== Поток событий. Внештатные ситуации
 
 image::flow_5.jpg[width=75%]
 
@@ -552,7 +580,7 @@ TODO: вставить видео
  ! Истории про взрыв здания - показать как я активирую зону НД и потом в нее вошел посторонний
 --
 
-== Поток событий
+== Поток событий. Аналитика
 image::flow_6.jpg[width=75%]
 
 == Подготовка данных
@@ -572,9 +600,8 @@ image::flow_6.jpg[width=75%]
 * форматирование - выпремление json-а
 --
 
-== Поток событий
+== Поток событий. Аналитика
 image::flow_7.jpg[width=75%]
-//image::analytic.jpg[]
 
 == Аналитическая БД. Требования
 
@@ -614,7 +641,7 @@ image::flow_7.jpg[width=75%]
 * наши сценарии: формирование аналитики за период
 --
 
-== Поток событий
+== Поток событий. Аналитика
 image::flow_8.jpg[width=75%]
 
 == Формирование отчетов
@@ -677,7 +704,7 @@ image::heatmap.jpg[width=70%]
 == Маршруты
 image::route.jpg[width=70%]
 
-== Поток событий
+== Поток событий. История
 
 image::flow_9.jpg[width=75%]
 
@@ -699,12 +726,17 @@ image::flow_9.jpg[width=75%]
 за заданный период в прошлом с сохранением темпа их поступления.
 --
 
+== Демо. История
+
+TODO: вставить видео
+
 == Выводы
 [%step]
 * Kafka - удачный выбор для Event Driven Architecture
 * При потоковой обработке помогает кэш
 * Esper - хорошее решение для CEP
-* Clickhouse - то, что нужно для аналитическии по Time-series данным
+* Clickhouse - то, что нужно для аналитики по Time-series данным
+* Kafka - удобно применять для воспроизведения истории
 
 [.notes]
 --
@@ -724,7 +756,7 @@ image::flow_9.jpg[width=75%]
 
 == Спасибо!
 
-image::akonyaev.jpg[]
+image::akonyaev.jpg[width=15%]
 
 *Алексей Коняев*
 

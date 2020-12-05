@@ -1,31 +1,47 @@
-    https://notebook.esperonline.net/
+%esperepl
+// Объявляем схемы/таблицы событий
+// Поток событий == таблица, одно событие == строка в таблице
 
-    %esperepl
-    // Объявляем схемы/таблицы событий
-    // Поток событий == таблица, одно событие == строка в таблице
-    create schema PersonsInZone(zoneId string, number int);
-    create schema DeviceStatus(deviceId string, zoneId string, turnedOn bool);
+@Description('Кол-во людей в геозоне')
+create schema PersonsInZone(zoneId string, number int);
 
-    // Контекст по каждому станку, пока он включен
-    create context TurnerOnDeviceCtx
-        partition by deviceId from DeviceStatus
-        initiated by DeviceStatus(turnedOn = true)
-        terminated by DeviceStatus(turnedOn = false);
+@Description('Статус оборудования (вкл или выкл)')
+create schema DeviceStatus(deviceId string, zoneId string, turnedOn bool);
 
-    // Шаблон: "Включили" → "Все ушли" → ("Прошел час" И "Никто не вернулся")
-    @Name('Unattended device')
-    //@KafkaOutputTopic(publishTo = 'notification')
-    context TurnerOnDeviceCtx
-    select
-    //    transpose(createAlertNotification(
-            ds.zoneId,
-            ds.deviceId
-    //    ))
-    from
-        pattern [
-            ds = DeviceStatus(turnedOn = true)
-            -> every (
-                PersonsInZone(zoneId = ds.zoneId and number = 0)
-                -> (timer:interval(1 hour) and not PersonsInZone(zoneId = ds.zoneId and number > 0))
-            )
-        ];
+insert into PersonsInZone
+select
+    e.zoneId,
+    e.number
+from
+    ZoneObjectsEvent(zoneType = "Workshop") e;
+
+insert into DeviceStatus
+select
+    e.deviceId,
+    e.zoneId,
+    e.turnedOn
+from DeviceStatusEvent(deviceType = "Machine") e;
+
+// Контекст по каждому станку, пока он включен
+create context TurnerOnDeviceCtx
+    partition by deviceId from DeviceStatus
+    initiated by DeviceStatus(turnedOn = true)
+    terminated by DeviceStatus(turnedOn = false);
+
+// Шаблон: "Включили" → "Все ушли" → ("Прошел час" И "Никто не вернулся")
+@Name('Unattended device')
+@KafkaOutputTopic(publishTo = 'notification')
+context TurnerOnDeviceCtx
+select
+    transpose(createAlertNotification(
+        ds.zoneId,
+        ds.deviceId
+    ))
+from
+    pattern [
+        ds = DeviceStatus(turnedOn = true)
+        -> every (
+            PersonsInZone(zoneId = ds.zoneId and number = 0)
+            -> (timer:interval(1 hour) and not PersonsInZone(zoneId = ds.zoneId and number > 0))
+        )
+    ];
