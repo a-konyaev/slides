@@ -189,7 +189,7 @@ image::flow_2.jpg[width=75%]
 * Геозоны
 ** Вход/выход
 ** Подсчет объектов в геозоне
-.^|image::tolya.jpg[width=100%, caption="", title="\"Неподдающиеся\", 1959 г"]
+.^|image::tolya-3.jpg[width=100%, caption="", title="\"Неподдающиеся\", 1959 г"]
 |===
 
 [.notes]
@@ -298,7 +298,7 @@ image::topology.jpg[]
 * На одно "сырое" -- несколько бизнес-событий
 * Передаются в UI и другим потребителям
 * Храним долго (1 месяц)
-.^|image::tolya.jpg[width=100%, caption="", title="\"Неподдающиеся\", 1959 г"]
+.^|image::tolya-4.jpg[width=100%, caption="", title="\"Неподдающиеся\", 1959 г"]
 |===
 
 [.notes]
@@ -517,7 +517,7 @@ image::flow_6.jpg[width=75%]
 * Фильтрация
 * Денормализация / обогащение
 * Форматирование
-.^|image::tolya.jpg[width=100%, caption="", title="\"Неподдающиеся\", 1959 г"]
+.^|image::tolya-5.jpg[width=100%, caption="", title="\"Неподдающиеся\", 1959 г"]
 |===
 
 [.notes]
