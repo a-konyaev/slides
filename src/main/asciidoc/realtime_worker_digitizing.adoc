@@ -662,7 +662,8 @@ video::demo-4.mp4[]
 
 * Confluent blog: https://www.confluent.io/learn/complex-event-processing[What is CEP?]
 * Complex events: https://complexevents.com/2020/06/17/the-future-of-event-stream-analytics-and-cep[The Future of Event Stream Analytics and CEP]
-* Esper: https://www.espertech.com
+* Esper: https://www.espertech.com/esper
+* Esper Notebook: https://notebook.esperonline.net
 
 == Спасибо!
 
