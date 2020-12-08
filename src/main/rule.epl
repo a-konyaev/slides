@@ -5,24 +5,25 @@
 @Description('Кол-во людей в геозоне')
 create schema PersonsInZone(zoneId string, number int);
 
-@Description('Статус оборудования (вкл или выкл)')
+@Description('Статус устройства (вкл / выкл)')
 create schema DeviceStatus(deviceId string, zoneId string, turnedOn bool);
 
+// таблицы можно заполнять событиями из топиков кафки
 insert into PersonsInZone
 select
     e.zoneId,
     e.number
 from
-    ZoneObjectsEvent(zoneType = "Workshop") e;
+    ZoneObjectsEvent(zoneType = "GeneratorRoom") e;
 
 insert into DeviceStatus
 select
     e.deviceId,
     e.zoneId,
     e.turnedOn
-from DeviceStatusEvent(deviceType = "Machine") e;
+from DeviceStatusEvent(deviceType = "Generator") e;
 
-// Контекст по каждому станку, пока он включен
+// Контекст по каждому устройству, пока оно включено
 create context TurnerOnDeviceCtx
     partition by deviceId from DeviceStatus
     initiated by DeviceStatus(turnedOn = true)

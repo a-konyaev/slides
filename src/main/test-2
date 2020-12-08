@@ -1,20 +1,27 @@
 %esperscenario
 t = "2020-12-10 12:00:00.000"
-// пришел сотрудник в цех
-PersonsInZone   = {zoneId="workshop-A", number=1}
+
+// Толя вошел в генераторную
+PersonsInZone   = {zoneId="room-A", number=1}
+
 t = t.plus(1 minute)
-// включил станок
-DeviceStatus    = {deviceId="machine-1", zoneId="workshop-A", turnedOn=true}
+// включил генератор
+DeviceStatus    = {deviceId="generator-1", zoneId="room-A", turnedOn=true}
+
 t = t.plus(30 minutes)
-// ушел из цеха, не выключив станок
-PersonsInZone   = {zoneId="workshop-A", number=0}
+// ушел, не выключив генератор
+PersonsInZone   = {zoneId="room-A", number=0}
+
 t = t.plus(5 minute)
 // вернулся через 5 минут
-PersonsInZone   = {zoneId="workshop-A", number=1}
+PersonsInZone   = {zoneId="room-A", number=1}
+
 t = t.plus(1 hour)
 // прошел час - нет тревоги.
+
 t = t.plus(3 hour)
-// ушел из цеха и снова не выключил станок
-PersonsInZone   = {zoneId="workshop-A", number=0}
+// ушел, а генератор все также остался включенным
+PersonsInZone   = {zoneId="room-A", number=0}
+
 t = t.plus(1 hour)
 // через час - тревога!
