@@ -29,6 +29,31 @@ image::logo.jpg[]
 {nbsp} +
 ведущий разработчик в КРОК
 
+
+//ВОПРОСЫ аудитории
+//- слайд "Транслятор. Кэширование"
+//Какие технологии кэширования вы используете при потоковой обработке?
+//- Hazelcast
+//- Apache Ignite
+//- Своя реализация (какая?)
+//- У нас и так не тормозит:)
+//
+//- Слайд "Esper. Альтернативы"
+//Какое CEP-решение вы применяете?
+//- Делаем все на Kafka Streams / KSqlDB
+//- Esper
+//- Flink
+//- Другое решение (какое?)
+//- У нас нет задач Complex Event Processing-а
+//
+//- Слайд "ClickHouse"
+//Какую БД для аналитики используете?
+//- ClickHouse
+//- InfluxDB
+//- Microsoft SQL Server Analysis Services (OLAP)
+//- NoSQL Database
+//- SQL Database
+
 //[%notitle]
 == Цифровой рабочий
 image::digital_worker.png[canvas,size=contain]
