@@ -19,7 +19,8 @@
     </developers>
 
     <properties>
-        <presentation>realtime_worker_digitizing.adoc</presentation>
+        <presentation>realtime_worker_digitizing_habr.adoc</presentation>
+        <!--<presentation>realtime_worker_digitizing.adoc</presentation>-->
         <!--<presentation>kafka_interesting_practice.adoc</presentation>-->
         <!--<presentation>clickhouse.adoc</presentation>-->
 
